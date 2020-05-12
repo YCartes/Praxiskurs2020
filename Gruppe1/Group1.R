@@ -1,6 +1,6 @@
 library(tidyverse)
 library(ggplot2)
-library(GGally)
+library(reshape2)
 setwd("/Users/nils-frederikschulze/Desktop/R-Projekt")
 load(file = "EnvGroup1")
 
@@ -24,6 +24,10 @@ GDP_data_prep <- function(states){
   return(states_df)
 }
 
+normalize <- function(x){
+  return(x/x[1]*100)
+}
+
 #_________________Approval-Data_________________
 #_______________________________________________
 # red states 
@@ -41,7 +45,7 @@ New_Jersey <- c(46, 44, 47, 47, 47, 48, 45, 51, 43, 54, 40, 54, 39, 57, 38, 57, 
 New_York <- c(49, 41, 49, 45, 50, 45, 51, 45, 45, 51, 42, 54, 42, 53, 35, 59, 37, 58, 36, 60, 38, 58, 38, 58, 39, 57, 37, 59, 36, 60, 37, 59, 37, 58, 38, 58, 38, 58, 39, 57, 37, 59, 38, 58, 37, 59, 36, 59, 36, 60, 37, 59, 37, 59, 36, 60, 37, 59, 36, 61, 36, 60, 36, 61, 37, 60, 36, 61, 36, 61, 36, 61, 37, 59, 38, 58)
 
 # swing states
-Florida <- c(56 ,  34 ,  56 ,  38 ,  56 ,  39 ,  56 ,  40 ,  51 ,  44 ,  48 ,  47 ,  47 ,  49 ,  47 ,  48 ,  48 ,  47 ,  49 ,  47 ,  47 ,  48 ,  49 ,  47 ,  50 ,  45 ,  49 ,  47 ,  48 ,  48 ,  48 ,  48 ,  50 ,  45 ,  51 ,  45 ,  50 ,  46 ,  49 ,  47 ,  49 ,  47 ,  49 ,  47 ,  49 ,  47 ,  46 ,  49 ,  46 ,  50 ,  47 ,  49 ,  47 ,  49 ,  47 ,  49 ,  48 ,  48 ,  47 ,  50 ,  48 ,  49 ,  48 ,  48 ,  48 ,  49 ,  47 ,  49 ,  49 ,  48 ,  48 ,  49 ,  49 ,  48 ,  50 ,  47 )
+Florida <- c(56, 34 , 56 , 38, 56 , 39, 56, 40, 51, 44, 48, 47, 47, 49, 47, 48, 48, 47, 49, 47, 47, 48, 49, 47, 50, 45, 49, 47, 48, 48, 48,  48 ,  50 ,  45 ,  51 ,  45 ,  50 ,  46 ,  49 ,  47 ,  49 ,  47 ,  49 ,  47 ,  49 ,  47 ,  46 ,  49 ,  46 ,  50 ,  47 ,  49 ,  47 ,  49 ,  47 ,  49 ,  48 ,  48 ,  47 ,  50 ,  48 ,  49 ,  48 ,  48 ,  48 ,  49 ,  47 ,  49 ,  49 ,  48 ,  48 ,  49 ,  49 ,  48 ,  50 ,  47 )
 Michigan <- c(48 ,  40 ,  49 ,  44 ,  50 ,  44 ,  46 ,  49 ,  45 ,  50 ,  40 ,  55 ,  43 ,  53 ,  39 ,  55 ,  40 ,  55 ,  40 ,  55 ,  40 ,  54 ,  41 ,  53 ,  42 ,  52 ,  43 ,  53 ,  41 ,  55 ,  42 ,  54 ,  43 ,  52 ,  44 ,  52 ,  42 ,  53 ,  42 ,  53 ,  41 ,  54 ,  42 ,  53 ,  43 ,  52 ,  41 ,  53 ,  40 ,  55 ,  40 ,  55 ,  42 ,  53 ,  43 ,  53 ,  42 ,  54 ,  40 ,  55 ,  42 ,  54 ,  42 ,  55 ,  43 ,  53 ,  42 ,  55 ,  41 ,  55 ,  40 ,  55 ,  42 ,  54 ,  43 ,  53)
 Nevada <- c(49 ,  39 ,  55 ,  38 ,  52 ,  43 ,  51 ,  45 ,  51 ,  44 ,  47 ,  48 ,  48 ,  48 ,  44 ,  50 ,  44 ,  51 ,  42 ,  54 ,  44 ,  51 ,  44 ,  51 ,  47 ,  48 ,  44 ,  52 ,  45 ,  51 ,  45 ,  50 ,  47 ,  49 ,  44 ,  52 ,  45 ,  51 ,  46 ,  50 ,  44 ,  52 ,  44 ,  51 ,  45 ,  50 ,  42 ,  53 ,  42 ,  55 ,  43 ,  53 ,  43 ,  53 ,  45 ,  51 ,  42 ,  53 ,  43 ,  53 ,  43 ,  54 ,  42 ,  55 ,  43 ,  54 ,  41 ,  55 ,  45 ,  52 ,  42 ,  54 ,  41 ,  56 ,  43 ,  54) 
 Ohio <- c(51 ,  37 ,  51 ,  42 ,  53 ,  42 ,  53 ,  43 ,  46 ,  48 ,  47 ,  48 ,  48 ,  48 ,  43 ,  51 ,  46 ,  49 ,  44 ,  51 ,  44 ,  51 ,  44 ,  52 ,  46 ,  50 ,  49 ,  47 ,  46 ,  50 ,  45 ,  51 ,  46 ,  50 ,  47 ,  49 ,  48 ,  48 ,  45 ,  50 ,  46 ,  49 ,  48 ,  47 ,  48 ,  48 ,  46 ,  49 ,  45 ,  51 ,  45 ,  50 ,  45 ,  51 ,  46 ,  50 ,  46 ,  50 ,  45 ,  51 ,  45 ,  51 ,  46 ,  51 ,  46 ,  51 ,  46 ,  51 ,  46 ,  51 ,  46 ,  50 ,  47 ,  49 ,  48 ,  49 )
@@ -92,30 +96,66 @@ all_State_Approval <- merge(red_Appr_df, merge(blue_Appr_df, swing_Appr_df))
 
 #________________Zusammenfuegen von GDP und Approval Daten________________
 #_________________________________________________________________________
-temp3 <- merge(all_State_GDP, all_State_Approval)
-temp4 <- names(temp3)
-temp4 <- temp4[2:31]
-f <- temp3[temp4]
-f <- cor(f)[16:30,1:15]
-state_cor <-diag(f)
-attribute <-  c("red","red","red","red","red","blue","blue","blue","blue","blue", "swing","swing","swing","swing","swing")
+temp <- merge(all_State_GDP, all_State_Approval)
+f <- temp[names(temp)[2:31]]
+state_cor <- diag(cor(f)[16:30,1:15])
+attribute <-  factor(c("red","red","red","red","red","blue","blue","blue","blue","blue", "swing","swing","swing","swing","swing"))
 state_cor_df <- data_frame(all_states, state_cor, attribute)
 names(state_cor_df) <- c("State", "Correlation", "Group")
 
 
-#________________Analyse________________
-#_______________________________________
+#________________Analyse/Plots________________
+#_____________________________________________
+
+summary(state_cor_df)
+
 
 # Barplot Korrelationen
 States <- factor(state_cor_df$State, levels = c(red_states, blue_states, swing_states))
-ggplot(data = state_cor_df, aes(x = States, y = Correlation, fill = Group)) + geom_bar(stat = "identity", position = "dodge") + scale_fill_manual("State", values = c("red" = "darkred", "blue" = "steelblue", "swing" = "#9999CC")) + coord_flip() + xlab("")
+ggplot(data = state_cor_df, aes(x = States, y = Correlation, fill = Group)) + geom_bar(stat = "identity", position = "dodge") + scale_fill_manual("State", values = c("red" = "darkred", "blue" = "steelblue", "swing" = "mediumpurple4")) + xlab("") + theme_grey(base_size = 17) + coord_flip()
 
 
-# GDP Heatmap Plot
-GDP_Matrix <- melt(all_State_GDP[names(all_State_GDP)[2:16]])
+# Boxplot Korrelationen
+ggplot(state_cor_df, aes(x = Group,y=Correlation)) + geom_boxplot(aes(fill = Group)) + scale_fill_manual("",values = c("red" = "darkred", "blue" = "steelblue", "swing" = "mediumpurple4")) + xlab("State") + theme_grey(base_size = 17)
+
+
+# GDP Heatmap
+Heatmap_GDP_df <- apply(all_State_GDP[,2:16], 2, normalize)
+GDP_Matrix <- melt(Heatmap_GDP_df)
 GDP_Matrix$Date <- all_State_GDP$Date
+GDP_Matrix <- GDP_Matrix[c("Var2", "value", "Date")]
 names(GDP_Matrix) <- c("State", "GDP", "Date")
-ggplot(data = GDP_Matrix, aes(x=State, y=Date, fill=GDP)) + geom_tile()
+ggplot(data = GDP_Matrix, aes(x = State, y = Date, fill = GDP)) + geom_tile() + geom_tile() + scale_fill_gradient(low = "#FFFFFF", high = "#012345") + theme(strip.placement = "outside") + xlab("")
+
+
+# Approval Heatmap
+Approval_Matrix <- melt(all_State_Approval[names(all_State_Approval)[2:16]])
+Approval_Matrix$Date <- all_State_Approval$Date
+names(Approval_Matrix) <- c("State", "Approval", "Date")
+ggplot(data = Approval_Matrix, aes(x=State, y=Date, fill=Approval)) + geom_tile() + scale_fill_gradient(low = "#FFFFFF", high = "#012345") + theme(strip.placement = "outside") + xlab("") + theme_grey(base_size = 17)
+
+
+# Kor und GDP Plot
+COR_GDP_df<- data_frame(apply(Heatmap_GDP_df[,1:15], 1, mean))
+COR_GDP_df$Approval <- as.numeric(apply(all_State_Approval[,2:16], 1, mean))
+COR_GDP_df$Date <- time
+names(COR_GDP_df) <- c("GDP", "Approval", "Date")
+ggplot() + geom_line(data = COR_GDP_df, aes(x = Date, y = Approval), color = "red")
+
+
+
+# avg GDP by State-Group
+avgGDP_df <- data_frame(apply(Heatmap_GDP_df[,1:5], 1, mean),apply(Heatmap_GDP_df[,6:10], 1, mean),apply(Heatmap_GDP_df[,10:15], 1, mean), time)
+names(avgGDP_df) <- c("Red_States", "Blue_States", "Swing_States", "Date")
+ggplot() + geom_line(data = avgGDP_df, aes(x = Date, y = Red_States), color = "red") + geom_line(data = avgGDP_df, aes(x = Date, y = Blue_States), color = "blue") + geom_line(data = avgGDP_df, aes(x = Date, y = Swing_States), color = "purple") + ylab("")
+
+
+
+
+# avg Approval by State-Group
+avgApproval_df <- data_frame(time, apply(all_State_Approval[,2:6], 1, mean), apply(all_State_Approval[,7:11], 1, mean), apply(all_State_Approval[,12:16], 1, mean))
+names(avgApproval_df) <- c("Date", "Red_States", "Blue_States", "Swing_States")
+ggplot() + geom_line(data = avgApproval_df, aes(x = Date, y = Red_States), color = "red") + geom_line(data = avgApproval_df, aes(x = Date, y = Blue_States), color = "blue") + geom_line(data = avgApproval_df, aes(x = Date, y = Swing_States), color = "purple") + ylab("")
 
 
 save.image(file = "EnvGroup1")
